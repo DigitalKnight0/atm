@@ -1,4 +1,4 @@
-package mypack;
+package Users;
 import DB.Transaction;
 import java.util.ArrayList;
 import java.time.LocalDate;
@@ -22,11 +22,11 @@ public class Admin extends User{
             printDisabledMessage();
             return;
         }
-        System.out.print("1 -- Add User");
-        System.out.print("2 -- Delete User");
-        System.out.print("3 -- Edit User");
-        System.out.print("4 -- Search Accounts");
-        System.out.print("1 -- View Reports");
+        System.out.println("1 -- Add User");
+        System.out.println("2 -- Delete User");
+        System.out.println("3 -- Edit User");
+        System.out.println("4 -- Search Accounts");
+        System.out.println("5 -- View Reports");
 
         int input = sc.nextInt();
 
@@ -56,9 +56,9 @@ public class Admin extends User{
         String pin;
         String title;
         double balance;
-
+        sc.nextLine();
         System.out.println("Please enter the information for new account");
-        System.out.println("Enter Login");
+        System.out.println("Please Enter the Login");
         login = sc.nextLine();
         System.out.println("Please Enter the Pin Code");
         pin = sc.nextLine();
@@ -89,7 +89,8 @@ public class Admin extends User{
         System.out.println("Please enter the account no");
         accNo = sc.nextInt();
         Customer user = (Customer)db.getUser(accNo);
-        System.out.println("Enter Login");
+        sc.nextLine();
+        System.out.println("Please Enter the Login");
         login = sc.nextLine();
         System.out.println("Please Enter the Pin Code");
         pin = sc.nextLine();
@@ -118,6 +119,7 @@ public class Admin extends User{
         String login;
         String title;
         String balance;
+        sc.nextLine();
         System.out.println("Please enter the account no");
         accNo = sc.nextLine();
         System.out.println("Enter Login");
@@ -143,7 +145,9 @@ public class Admin extends User{
             Customer cUser = (Customer)user;
             parsed.add((cUser.accNo + "  " + cUser.login + "  " + cUser.title + "  " + cUser.getBalance()));
         }
-        return (String[])parsed.toArray();
+        String[] parsedStrings = new String[parsed.size()];
+        parsedStrings = parsed.toArray(parsedStrings);
+        return parsedStrings;
     }
 
     private void getReports()
@@ -207,7 +211,9 @@ public class Admin extends User{
             DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/YYYY");
             parsed.add((T.type + "  " + T.accNo + "  " + T.title + "  " + T.amount + T.date.format(format)));
         }
-        return (String[])parsed.toArray();
+        String[] parsedStrings = new String[parsed.size()];
+        parsedStrings = parsed.toArray(parsedStrings);
+        return parsedStrings;
     }
 
     private String[] formatBalanceReport(ArrayList<Customer> customers)
@@ -218,6 +224,8 @@ public class Admin extends User{
         {
             parsed.add((customer.accNo + "  " + customer.login + "  " + customer.title + "  " + customer.getBalance()));
         }
-        return (String[])parsed.toArray();
+        String[] parsedStrings = new String[parsed.size()];
+        parsedStrings = parsed.toArray(parsedStrings);
+        return parsedStrings;
     }
 }

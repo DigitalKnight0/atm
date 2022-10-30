@@ -1,11 +1,12 @@
 package DB;
 import java.util.ArrayList;
+
+import Users.Customer;
+import Users.User;
+
 import java.time.LocalDate;
 
-import mypack.Customer;
-import mypack.User;
-
-public class database
+public class Accounts
 {
     final private ArrayList<User> accounts = new ArrayList<User>();
     final private ArrayList<Transaction> transactions = new ArrayList<Transaction>();
@@ -75,9 +76,12 @@ public class database
 
     public ArrayList<User> searchAccounts(String accNo, String login, String title, String balance)
     {
+        ArrayList<User> mod = new ArrayList<User>(accounts);
         ArrayList<User> results = new ArrayList<User>(accounts);
+        removeAdmins(mod);
+        removeAdmins(results);
         if(!accNo.equals("")){
-            for(User user : results)
+            for(User user : mod)
             {
                 if(user.accNo != (Integer.parseInt(accNo)))
                 {
@@ -85,9 +89,9 @@ public class database
                 }
             }
         }
-
+        mod = new ArrayList<>(results);
         if(!login.equals("")){
-            for(User user : results)
+            for(User user : mod)
             {
                 if(!user.login.equals(login))
                 {
@@ -95,9 +99,9 @@ public class database
                 }
             }
         }
-
+        mod = new ArrayList<>(results);
         if(!title.equals("")){
-            for(User user : results)
+            for(User user : mod)
             {
                 if(!user.title.equals(title))
                 {
@@ -105,9 +109,9 @@ public class database
                 }
             }
         }
-
+        mod = new ArrayList<>(results);
         if(!balance.equals("")){
-            for(User user : results)
+            for(User user : mod)
             {
                 Customer customer = (Customer)user;
                 if((customer.getBalance()) != Integer.parseInt(balance))
@@ -167,11 +171,43 @@ public class database
         }
         Integer[] accNos = new Integer[accounts.size()];
         accNos = numbers.toArray(accNos);
-        return accNos[accNos.length] + 1;
+        return accNos[accNos.length - 1] + 1;
     }
 
     public ArrayList<User> getAccounts()
     {
         return this.accounts;
+    }
+
+    private void removeAdmins(ArrayList<User> users)
+    {
+        ArrayList<User> mod = new ArrayList<User>(users);
+        for(User user : mod)
+        {
+            if(user.isAdmin)
+            {
+                users.remove(user);
+            }
+        }
+    }
+
+    public double withdrawalsSinceYesterday(int accNo)
+    {
+        LocalDate yesterday = (LocalDate.now()).minusDays(1);
+        double amount = 0;
+        for(Transaction transaction : transactions)
+        {
+            if(transaction.accNo == accNo)
+            {
+                if(transaction.date.isEqual(yesterday) || transaction.date.isAfter(yesterday))
+                {
+                    if(transaction.type.equals("Withdrawal"))
+                    {
+                        amount += transaction.amount;
+                    }
+                }
+            }
+        }
+        return amount;
     }
 }

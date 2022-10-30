@@ -1,10 +1,11 @@
-package mypack;
+package Users;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import DB.Transaction;
+import Exceptions.*;
 
 public class Customer extends User{
     private double balance;
-    private String lastTransactionOn;
-    private double TotalTransactionBalance;
 
     public Customer(String login, String pin, String title, double balance)
     {
@@ -27,7 +28,7 @@ public class Customer extends User{
         System.out.println("2 -- Cash Transfer");
         System.out.println("3 -- Deposit Cash");
         System.out.println("4 -- Display Balance");
-        System.out.println("1 -- Withdraw Cash");
+        System.out.println("0 -- Exit");
 
         int input = sc.nextInt();
 
@@ -69,11 +70,21 @@ public class Customer extends User{
         {
             System.out.println(i + " " + (i * 500));
         }
-        int input = sc.nextInt();
+        double input = sc.nextDouble() * 500;
 
         try{
             tryAndWithdraw(input);
+            Transaction transaction = new Transaction(this.accNo, "Withdrawal", this.title, LocalDate.now(), input);
+            db.addTransaction(transaction);
+            System.out.println("Do you want receipt?");
+            System.out.println("1 -- Yes");
+            System.out.println("2 -- No");
+            int input1 = sc.nextInt();
+            if(input1 == 1) printReceipt(transaction);
         } catch (LowBalance e)
+        {
+            System.out.println(e);
+        } catch (LimitExceed e)
         {
             System.out.println(e);
         }
@@ -87,15 +98,30 @@ public class Customer extends User{
 
         try{
             tryAndWithdraw(input);
+            Transaction transaction = new Transaction(this.accNo, "Withdrawal", this.title, LocalDate.now(), input);
+            db.addTransaction(transaction);
+            System.out.println("Do you want receipt?");
+            System.out.println("1 -- Yes");
+            System.out.println("2 -- No");
+            int input1 = sc.nextInt();
+            if(input1 == 1) printReceipt(transaction);
         } catch (LowBalance e)
+        {
+            System.out.println(e);
+        } catch (LimitExceed e)
         {
             System.out.println(e);
         }
     }
 
-    private void tryAndWithdraw(int amount) throws LowBalance
+    private void tryAndWithdraw(double amount) throws LowBalance, LimitExceed
     {
         if(this.balance < amount) throw new LowBalance("Your Balance is too low");
+        double withdrawalsSinceYesterday = db.withdrawalsSinceYesterday(this.accNo);
+        if((withdrawalsSinceYesterday + amount) > 20000)
+        {
+            throw new LimitExceed("You cannot withdraw more than 20000 in 24 hours");
+        }
         this.balance -= amount;
     }
 
@@ -110,15 +136,8 @@ public class Customer extends User{
 
         Customer account = (Customer)db.getUser(accNo);
         System.out.println("Transfer Rs." + amount + "To " + account.title);
-
-        try{
-            tryAndWithdraw(amount);
-            account.depositCash(amount);
-        } catch (LowBalance e)
-        {
-            System.out.println(e);
-        }
-
+        this.balance -= amount;
+        account.depositCash(amount);
     }
 
     private void depositCash()
@@ -126,6 +145,13 @@ public class Customer extends User{
         System.out.println("Please Enter Amount to Deposit");
         double amount = sc.nextDouble();
         depositCash(amount);
+        Transaction transaction = new Transaction(this.accNo, "Deposit", this.title, LocalDate.now(), amount);
+        db.addTransaction(transaction);
+        System.out.println("Do you want receipt?");
+        System.out.println("1 -- Yes");
+        System.out.println("2 -- No");
+        int input1 = sc.nextInt();
+        if(input1 == 1) printReceipt(transaction);
     }
 
     public void depositCash(double amount)
@@ -148,6 +174,16 @@ public class Customer extends User{
     public String getPin()
     {
         return this.pin;
+    }
+
+    private void printReceipt(Transaction t)
+    {
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("dd/MM/YYYY");
+        System.out.println("Date: " + t.date.format(format));
+        System.out.println("Account Number: " + this.accNo);
+        System.out.println("Type: " + t.type);
+        System.out.println("Amount: " + t.amount);
+        System.out.println("Balance: " + this.balance);
     }
 
 }

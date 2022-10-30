@@ -1,5 +1,6 @@
-import mypack.*;
 import java.util.Scanner;
+
+import Users.*;
 class Atm
 {
     private User currentUser;

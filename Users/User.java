@@ -1,9 +1,9 @@
-package mypack;
-import DB.database;
+package Users;
+import DB.Accounts;
 import java.util.Scanner;
 
 public abstract class User {
-    final static database db = new database();
+    final static Accounts db = new Accounts();
     final Scanner sc = new Scanner(System.in);
     public int accNo;
     public String login;
