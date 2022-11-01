@@ -43,17 +43,38 @@ public abstract class User {
     {
         Customer c1, c2, c3;
         Admin a1, a2;
-        c1 = new Customer("user1", "111", "User 1", 5000);
-        c2 = new Customer("user2", "222", "User 2", 50000);
-        c3 = new Customer("user3", "user3", "User 3", 89000);
+        c1 = new Customer("user1", "111", "Savings", "User 1", 5000);
+        db.addUser(c1);
+        c2 = new Customer("user2", "222", "Current","User 2", 50000);
+        db.addUser(c2);
+        c3 = new Customer("user3", "user3", "Current","User 3", 89000);
+        db.addUser(c3);
 
         a1 = new Admin("admin1", "111", "Admin 1");
-        a2 = new Admin("admin2", "222", "Admin 2");
-        db.addUser(c1);
-        db.addUser(c2);
-        db.addUser(c3);
         db.addUser(a1);
+        a2 = new Admin("admin2", "222", "Admin 2");
         db.addUser(a2);
+    }
+
+    protected boolean returnToMain()
+    {
+        System.out.println("1 --- Return to Main Menu");
+        System.out.println("Press any other key to exit");
+        int input = sc.nextInt();
+        if(input == 1) return true;
+        return false;
+    }
+
+    public final void cls()
+    {
+    try {
+        if (System.getProperty("os.name").contains("Windows")) {
+            new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+        }
+        else {
+            System.out.print("\033\143");
+        }
+    } catch (Exception ex) {}
     }
 
     abstract public void displayMenu();

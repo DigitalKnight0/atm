@@ -1,6 +1,6 @@
 package DB;
 import java.util.ArrayList;
-
+import java.util.Arrays;
 import Users.Customer;
 import Users.User;
 
@@ -17,6 +17,19 @@ public class Accounts
         for(User user : accounts)
         {
             if(user.login.equals(login))
+            {
+                return true;
+            }
+        }
+         return false;
+    }
+
+    public boolean customerExists(int accNo)
+    {
+        for(User user : accounts)
+        {
+            if(user.isAdmin) continue;
+            if(user.accNo == accNo)
             {
                 return true;
             }
@@ -74,8 +87,9 @@ public class Accounts
         return index;
     }
 
-    public ArrayList<User> searchAccounts(String accNo, String login, String title, String balance)
+    public ArrayList<User> searchAccounts(String accNo, String login, String type, String title, String balance)
     {
+        
         ArrayList<User> mod = new ArrayList<User>(accounts);
         ArrayList<User> results = new ArrayList<User>(accounts);
         removeAdmins(mod);
@@ -94,6 +108,18 @@ public class Accounts
             for(User user : mod)
             {
                 if(!user.login.equals(login))
+                {
+                    results.remove(user);
+                }
+            }
+        }
+        mod = new ArrayList<>(results);
+        if(!type.equals("")){
+            type = type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase();
+            for(User user : mod)
+            {
+                Customer customer = (Customer)user;
+                if(!customer.type.equals(type))
                 {
                     results.remove(user);
                 }
@@ -171,6 +197,7 @@ public class Accounts
         }
         Integer[] accNos = new Integer[accounts.size()];
         accNos = numbers.toArray(accNos);
+        Arrays.sort(accNos);
         return accNos[accNos.length - 1] + 1;
     }
 

@@ -33,7 +33,7 @@ class Atm
             }
         }
         currentUser.displayMenu();
-
+        sc.close();
     }
     public static void main(String args[])
     {

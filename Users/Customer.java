@@ -1,17 +1,32 @@
 package Users;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.InputMismatchException;
+
 import DB.Transaction;
 import Exceptions.*;
 
 public class Customer extends User{
     private double balance;
+    public String type;
 
-    public Customer(String login, String pin, String title, double balance)
+    public Customer(String login, String pin, String type, String title, double balance)
     {
         this.accNo = db.getNewAccNo();
         this.login = login;
         this.pin = pin;
+        this.title = title;
+        this.type = type;
+        this.balance = balance;
+        this.isAdmin = false;
+    }
+
+    public Customer(int accNo, String login, String pin, String type, String title, double balance)
+    {
+        this.accNo = accNo;
+        this.login = login;
+        this.pin = pin;
+        this.type = type;
         this.title = title;
         this.balance = balance;
         this.isAdmin = false;
@@ -19,60 +34,90 @@ public class Customer extends User{
 
     public void displayMenu()
     {
+        cls();
         if(this.isDisabled)
         {
             printDisabledMessage();
             return;
         }
-        System.out.println("1 -- Withdraw Cash");
-        System.out.println("2 -- Cash Transfer");
-        System.out.println("3 -- Deposit Cash");
-        System.out.println("4 -- Display Balance");
-        System.out.println("0 -- Exit");
-
-        int input = sc.nextInt();
-
-        switch(input)
+        boolean reprintMain = true;
+        while(reprintMain)
         {
-            case 1:
-                withdrawCash();
-                break;
-            case 2:
-                transferCash();
-                break;
-            case 3:
-                depositCash();
-                break;
-            case 4:
-                displayInfo();
-                break;
+            cls();
+            System.out.println("1 -- Withdraw Cash");
+            System.out.println("2 -- Cash Transfer");
+            System.out.println("3 -- Deposit Cash");
+            System.out.println("4 -- Display Balance");
+            System.out.println("Any Other Number -- Exit");
+            int input;
+            try{
+                input = sc.nextInt();
+            } catch (InputMismatchException e)
+            {
+                System.out.println("You Entered an Invalid Number");
+                continue;
+            }
+
+            switch(input)
+            {
+                case 1:
+                    reprintMain = withdrawCash();
+                    break;
+                case 2:
+                    reprintMain =transferCash();
+                    break;
+                case 3:
+                    reprintMain =depositCash();
+                    break;
+                case 4:
+                    reprintMain =displayInfo();
+                    break;
+                default:
+                    return;
+            }
         }
     }
 
-    private void withdrawCash()
+    private boolean withdrawCash()
     {
+        cls();
         System.out.println("1 -- Fast Cash");
         System.out.println("2 -- Normal Cash");
+        try{
+            int input = sc.nextInt();
 
-        int input = sc.nextInt();
-
-        if(input == 1){
-            fastCash();
-        } else {
-            normalCash();
+            if(input == 1){
+                fastCash();
+            } else {
+                normalCash();
+            }
+        } catch (InputMismatchException e)
+        {
+            System.out.println("You Entered an Invalid Number");
         }
+        return returnToMain();
     }
 
     private void fastCash()
     {
-        System.out.println("Please Select an Option");
-        for(int i = 1; i <= 7; i++)
-        {
-            System.out.println(i + " " + (i * 500));
-        }
-        double input = sc.nextDouble() * 500;
-
+        cls();
         try{
+            System.out.println("Please Select an Option");
+            for(int i = 1; i <= 7; i++)
+            {
+                System.out.println(i + " " + (i * 500));
+            }
+            double input = sc.nextInt();
+            if(input < 1 || input > 7){
+                System.out.println("Only options one to 7 are allowed");
+                return;
+            }
+            input *= 500;
+            System.out.println("Are you sure you want to withdraw Rs. " + input + "? (Y/N)");
+            sc.nextLine();
+            String input2 = sc.nextLine();
+            if(!(input2.equals("Y") || input2.equals("y"))) return;
+        
             tryAndWithdraw(input);
             Transaction transaction = new Transaction(this.accNo, "Withdrawal", this.title, LocalDate.now(), input);
             db.addTransaction(transaction);
@@ -87,16 +132,24 @@ public class Customer extends User{
         } catch (LimitExceed e)
         {
             System.out.println(e);
+        } catch (InputMismatchException e)
+        {
+            System.out.println("You have entered an invalid amount");
         }
         
     }
 
     private void normalCash()
     {
-        System.out.println("Please Select Amount to withdraw");
-        int input = sc.nextInt();
-
+        cls();
         try{
+            System.out.println("Please Select Amount to withdraw");
+            int input = sc.nextInt();
+            System.out.println("Are you sure you want to withdraw Rs. " + input + "? (Y/N)");
+            sc.nextLine();
+            String input2 = sc.nextLine();
+            if(!(input2.equals("Y") || input2.equals("y"))) return;
+
             tryAndWithdraw(input);
             Transaction transaction = new Transaction(this.accNo, "Withdrawal", this.title, LocalDate.now(), input);
             db.addTransaction(transaction);
@@ -111,6 +164,9 @@ public class Customer extends User{
         } catch (LimitExceed e)
         {
             System.out.println(e);
+        } catch (InputMismatchException e)
+        {
+            System.out.println("You have entered an invalid amount");
         }
     }
 
@@ -125,33 +181,76 @@ public class Customer extends User{
         this.balance -= amount;
     }
 
-    private void transferCash()
+    private boolean transferCash()
     {
-        int amount;
-        String accNo;
-        System.out.println("Please enter the amount to transfer");
-        amount = sc.nextInt();
-        System.out.println("Please Enter the Account Number to tranfser to");
-        accNo = sc.nextLine();
+        cls();
+        try{
+            double amount;
+            int accNo;
+            System.out.println("Please enter the amount to transfer in multiples of 500");
+            amount = sc.nextDouble();
+            if(amount % 500 != 0)
+            {
+                System.out.println("Entered amount can only be in multiples of 500");
+                return returnToMain();
+            }
+            if(amount > this.balance)
+            {
+                System.out.println("Not Enough Balance in your account");
+                throw new LowBalance("Not enough Balance");
+            }
+            System.out.println("Please Enter the Account Number to tranfser to");
+            accNo = sc.nextInt();
+            sc.nextLine();
+            if(!db.customerExists(accNo)) throw new UserNotFound("Could not find a customer with given account no");
 
-        Customer account = (Customer)db.getUser(accNo);
-        System.out.println("Transfer Rs." + amount + "To " + account.title);
-        this.balance -= amount;
-        account.depositCash(amount);
+            Customer account = (Customer)db.getUser(accNo);
+            System.out.println("Transfer Rs." + amount + "To " + account.title + "?");
+            System.out.println("Please re-enter the account number to proceed");
+            int input2 = sc.nextInt();
+            sc.nextLine();
+            if(!(accNo != input2)) return returnToMain();
+            this.balance -= amount;
+            account.depositCash(amount);
+            Transaction transaction = new Transaction(this.accNo, "Transfer", this.title, LocalDate.now(), amount);
+            db.addTransaction(transaction);
+            System.out.println("Do you want receipt?");
+            System.out.println("1 -- Yes");
+            System.out.println("Any Other Number -- No");
+            int input1 = sc.nextInt();
+            if(input1 == 1) printReceipt(transaction);
+        } catch (LowBalance e)
+        {
+            System.out.println(e);
+        } catch (UserNotFound e)
+        {
+            System.out.println(e);
+        } catch (InputMismatchException e)
+        {
+            System.out.println("You have entered an invalid amount");
+        }
+        return returnToMain();
     }
 
-    private void depositCash()
+    private boolean depositCash()
     {
-        System.out.println("Please Enter Amount to Deposit");
-        double amount = sc.nextDouble();
-        depositCash(amount);
-        Transaction transaction = new Transaction(this.accNo, "Deposit", this.title, LocalDate.now(), amount);
-        db.addTransaction(transaction);
-        System.out.println("Do you want receipt?");
-        System.out.println("1 -- Yes");
-        System.out.println("2 -- No");
-        int input1 = sc.nextInt();
-        if(input1 == 1) printReceipt(transaction);
+        cls();
+        try{
+            System.out.println("Please Enter Amount to Deposit");
+            double amount = sc.nextDouble();
+            depositCash(amount);
+            Transaction transaction = new Transaction(this.accNo, "Deposit", this.title, LocalDate.now(), amount);
+            db.addTransaction(transaction);
+            System.out.println("Do you want receipt?");
+            System.out.println("1 -- Yes");
+            System.out.println("Any Other Number -- No");
+            int input1 = sc.nextInt();
+            if(input1 == 1) printReceipt(transaction);
+        } catch (InputMismatchException e)
+        {
+            System.out.println("You Have Entered an Invalid Number");
+        }
+        return returnToMain();
     }
 
     public void depositCash(double amount)
@@ -159,11 +258,13 @@ public class Customer extends User{
         this.balance += amount;
     }
 
-    private void displayInfo()
+    private boolean displayInfo()
     {
+        cls();
         System.out.println("Title: " + this.title);
         System.out.println("Account No: " + this.login);
         System.out.println("Balance: " + this.balance);
+        return returnToMain();
     }
 
     public double getBalance()
